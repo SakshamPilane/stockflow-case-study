@@ -1,168 +1,147 @@
-# 🗄️ Database Design Notes
-## StockFlow – Inventory Management System
-## Case Study (Bynry Inc.)
+# 🗄️ Database Design Notes  
+## StockFlow – Case Study (Bynry Inc.)
 
-This document explains the reasoning behind the database schema in schema.sql, including design choices, assumptions, and clarifying questions.
-
----
-
-## 📌 1. Goals of the Schema
-
-### The database is designed to support:
-- Multiple companies using the platform
-- Each company having multiple warehouses
-- Products stored in multiple warehouses
-- Tracking stock levels & history
-- Suppliers providing products
-- Bundles composed of other products
-- Sales activity for forecasting and low-stock alerts
-
-The schema must be normalized, scalable, and enforce business rules via constraints.
+These are my personal notes explaining why I designed the database the way I did.  
+The goal was to support the main features of an inventory system without over-complicating things.
 
 ---
 
-## 📁 2. Key Tables & Why They Exist
-### 2.1 companies
-Defines tenants of the platform.
-Every warehouse, product, supplier, and sale belongs to a company.
+## 1) What the schema needs to support
 
-### 2.2 warehouses
-Each warehouse belongs to a company.
-Indexes added for fast lookup.
+From the case study, the system should allow:
 
-### 2.3 products
-Stores core product information.
-Important decisions:
-- UNIQUE(company_id, sku) ensures SKU uniqueness per company.
-- low_stock_threshold allows overriding default thresholds.
-- product_type_id links to categorical defaults.
+- Multiple companies using the platform  
+- Each company having multiple warehouses  
+- Products stored in different warehouses with different quantities  
+- Tracking inventory changes (for audit + forecasting)  
+- Suppliers → which products they provide  
+- Bundles (one product made of other products)  
+- Sales history → used for low-stock alerts  
 
-### 2.4 inventories
-This is a junction table between products and warehouses.
-Reasons:
-- A product can exist in multiple warehouses
-- Each warehouse can store many products
-- Quantity differs per warehouse
-- UNIQUE(product_id, warehouse_id) prevents duplicates.
-
-### 2.5 inventory_history
-Tracks all inventory changes:
-- Purchases
-- Sales
-- Transfers
-- Adjustments
-
-This enables:
-- stock audit
-- forecasting
-- debugging inconsistencies
-- History is append-only.
-
-### 2.6 suppliers & supplier_products
-A supplier can supply multiple products.
-A product can have multiple suppliers.
-We store:
-- supplier SKU
-- lead time
-- supplier pricing
-- Used in low-stock alert recommendations.
-
-### 2.7 sales
-Tracks product demand.
-Used for:
-- recent sales activity
-- calculating average daily sales
-- predicting days until stockout
-- Indexed by (product_id, sold_at) for time-based queries.
-
-### 2.8 product_bundles
-Supports bundle compositions like:
-A “Gift Pack” contains 2 bottle units + 1 accessory
-This allows:
-- nested products
-- dynamic inventory deduction
-- smarter forecasting
+Basically, the schema should be clean, normalized, and work well with the APIs in Part 1 and Part 3.
 
 ---
 
-## ⚙️ 3. Normalization & Constraint Decisions
+## 2) Main tables and why they exist
 
-### ✔ Normalization Level: 3NF
-- No repeated data
-- Clear foreign keys
-- Junction tables for many-to-many relationships
+### **companies**
+Every record in the system belongs to a company, so this is the top-level tenant.
 
-### ✔ Referencing with ON DELETE CASCADE
-Used where appropriate so removing a product or warehouse cleans dependent data.
+### **warehouses**
+A company can have multiple warehouses.  
+Indexed by company for fast filtering.
 
-### ✔ Numeric types used for:
-- price → NUMERIC(12,2)
-- quantity → BIGINT
+### **products**
+Stores product info.  
+Important decisions made:
 
-### ✔ Index strategy:
-- Warehouses by company
-- Products by company
-- Inventory by product + warehouse
-- Sales by product + sold_at
-This ensures fast queries for alerts and reports.
+- SKUs are unique **per company** (not globally).  
+- `product_type_id` helps with default thresholds.  
+- `low_stock_threshold` lets us override the default.
 
----
+### **inventories**
+This is basically the link between warehouses and products.  
+A product can be stored in many warehouses, and each warehouse stores many products.
 
-## ❓ 4. Missing Requirements / Questions for Product Team
-These must be clarified before building the real system.
-### Are SKUs unique platform-wide or per company?
-Current schema uses per-company uniqueness.
+I used:
+- `UNIQUE(product_id, warehouse_id)` → avoids duplicates  
+- `quantity` stored as BIGINT  
 
-### What is the definition of “recent sales activity”?
-- Last 30 days?
-- Last 90 days?
-- Per warehouse or company-wide?
+### **inventory_history**
+For tracking every stock change.  
+This is useful later for:
 
-### How should bundle products subtract inventory?
-- On sale, should component quantities decrease automatically?
-- How to handle partial availability of components?
+- Audits  
+- Debugging quantity issues  
+- Forecasting trends  
 
-### Do we support inventory transfers between warehouses?
-If yes:
-- Should transfers generate two history entries (+ and -)?
-- Are transfers treated differently from adjustments?
-Should threshold be:
-- per product?
-- per warehouse?
-- per product type?
-- or overridable at multiple levels?
+This is append-only.
 
-### Should negative inventory be allowed?
-- If yes, what business rules apply?
-- If no, should operations be blocked?
+### **suppliers** and **supplier_products**
+A supplier can supply multiple products and each product may have multiple suppliers.  
+Stored info includes:
 
-### Do suppliers belong to the company or platform-wide?
-- What fields must be versioned or audited?
-- Product price changes?
-- Supplier lead time updates?
+- supplier SKU  
+- lead time  
+- cost  
 
----
+Used mainly by the low-stock alerts logic.
 
-## 💡 5. Design Trade-offs
-### ⭐ Chosen Solution:
-A normalized relational schema with clear constraints.
+### **sales**
+Tracks how much a product is getting sold.  
+Important for:
 
-### Alternatives (not chosen):
-- Denormalized warehouse-product documents (NoSQL)
-- Stored bundles as nested JSON (less flexible)
+- “recent sales activity” rule  
+- average daily sales  
+- stock-out prediction  
 
-### Relational choice is better because:
-- The domain has strong relationships
-- Reporting & forecasting rely on joins
-- Transaction safety is critical
+I indexed `(product_id, sold_at)` for fast lookups.
+
+### **product_bundles**
+For handling bundles like "Gift Pack contains X + Y".  
+Not fully implemented in the API, but schema supports it.
 
 ---
 
-## 📈 6. Future Extensions (not required now)
-The schema easily supports future features:
-- Purchase orders
-- Reorder automation
-- Multi-currency pricing
-- Forecasting using ML
-- Batched inventory adjustments
-- Role-based access to warehouses
+## 3) Normalization and constraints
+
+- Designed roughly in **3NF**  
+- No duplicated fields  
+- Clear foreign keys everywhere  
+
+I used `ON DELETE CASCADE` in places where removing parent records should remove dependent entries (inventories, history, supplier-product links).
+
+Indexes were added where the API will query the most:
+
+- warehouses by company  
+- products by company  
+- inventories by product/warehouse  
+- sales by product and date  
+
+---
+
+## 4) Requirements that were unclear (questions I would ask the product team)
+
+The case study doesn’t specify a few important details.  
+Before building the real system, I’d ask:
+
+- Should SKUs be unique globally or per company?  
+- How many days count as “recent sales”? (I assumed 90)  
+- Should bundles automatically reduce component quantities when sold?  
+- Can inventory go negative? Or should we block such cases?  
+- Should thresholds be set per-product, per-warehouse, or type-level only?  
+- Do suppliers belong only to a company, or can they be shared platform-wide?  
+- Should inventory transfers between warehouses be tracked separately?  
+
+These decisions affect both schema and API behavior.
+
+---
+
+## 5) Design trade-offs
+
+I chose a **relational design** because:
+
+- Data is highly connected  
+- Queries for alerts and forecasting require joins  
+- Auditing and consistency matter a lot  
+
+Alternative could be a denormalized NoSQL design, but that would complicate relationships like bundles and suppliers.
+
+---
+
+## 6) Future extensions the schema can support
+
+Not required for the case study, but the structure makes it easy to add:
+
+- Purchase orders  
+- Automated reorder suggestions  
+- Warehouse-specific thresholds  
+- Multi-currency pricing  
+- Role-based access  
+- ML-based forecasting  
+
+These weren’t implemented, but the schema can grow into them.
+
+---
+
+These notes reflect my thought process while designing the schema and preparing for Part 2 of the case study.

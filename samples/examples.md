@@ -1,11 +1,15 @@
-# 📄 StockFlow Case Study – Sample API Examples
-This file contains mock example inputs and outputs for the API implementations in Part 1 and Part 3.
-These examples illustrate how the endpoints would behave in a real system and help reviewers understand your logic.
+# 📄 Sample API Examples (My Notes)
 
-## 🧩 Part 1 — Product Creation API
+These are a few mock examples I created to show how my Part 1 and Part 3 APIs would behave.  
+They’re not real outputs — just to help explain the logic.
+
+---
+
+## Part 1 — Product Creation API
 
 ### POST /api/products
-Sample Request #1 (Single Warehouse)
+
+### Example 1: Single Warehouse
 ```json
 {
   "name": "Premium Water Bottle",
@@ -16,13 +20,12 @@ Sample Request #1 (Single Warehouse)
 }
 ```
 
-#### 🎯 Expected Behavior
-- Checks SKU uniqueness
-- Creates product
-- Adds inventory for warehouse 10 → quantity: 50
-- Returns success
+Expected:
+- Valid request  
+- Product created  
+- Inventory row added for warehouse 10  
 
-#### Sample Response
+Response:
 ```json
 {
   "message": "Product created",
@@ -30,7 +33,9 @@ Sample Request #1 (Single Warehouse)
 }
 ```
 
-#### Sample Request #2 (Multiple Warehouses)
+---
+
+### Example 2: Multiple Warehouses
 ```json
 {
   "name": "Smart Faucet Sensor",
@@ -42,7 +47,8 @@ Sample Request #1 (Single Warehouse)
   ]
 }
 ```
-#### Sample Response
+
+Response:
 ```json
 {
   "message": "Product created",
@@ -50,20 +56,25 @@ Sample Request #1 (Single Warehouse)
 }
 ```
 
-#### ❌ Sample Error — Missing Fields
+---
+
+### Missing Required Fields
 ```json
 {
   "sku": "BAD-001"
 }
 ```
-#### Response (Status: 400)
+
+Response (400):
 ```json
 {
   "error": "Missing required fields: name, sku, price"
 }
 ```
 
-#### ❌ Sample Error — Duplicate SKU
+---
+
+### Duplicate SKU
 ```json
 {
   "name": "Bottle",
@@ -71,7 +82,8 @@ Sample Request #1 (Single Warehouse)
   "price": 100
 }
 ```
-#### Response (Status: 409)
+
+Response (409):
 ```json
 {
   "error": "SKU already exists"
@@ -80,22 +92,37 @@ Sample Request #1 (Single Warehouse)
 
 ---
 
-## 🔔 Part 3 — Low-Stock Alerts API
+### Invalid Warehouse ID (extra example)
+```json
+{
+  "name": "Test",
+  "sku": "T-1",
+  "price": 50,
+  "warehouse_id": 999,
+  "initial_quantity": 10
+}
+```
+
+Response:
+```json
+{
+  "error": "Warehouse 999 does not exist"
+}
+```
+
+---
+
+## Part 3 — Low-Stock Alerts API
 
 ### GET /api/companies/5/alerts/low-stock
 
-#### Example scenario:
-- Product A threshold = 20
-- Warehouse 1 stock = 5
-- Warehouse 2 stock = 30
-- Recent sales: yes
-- Supplier exists with lead time = 5 days
+Example scenario:
+- Product threshold = 20  
+- Warehouse 1 → stock = 5  
+- Warehouse 2 → stock = 30  
+- Only warehouse 1 should trigger an alert  
 
-#### 🔍 Expected Behavior:
-- Alert for warehouse 1 (5 < 20)
-- No alert for warehouse 2
-
-#### ✅ Sample Response
+Sample Response:
 ```json
 {
   "alerts": [
@@ -119,8 +146,9 @@ Sample Request #1 (Single Warehouse)
 }
 ```
 
-#### ❌ Sample Response — No Recent Sales
-If a product has low stock but NO sales in last 90 days:
+---
+
+### No Recent Sales
 ```json
 {
   "alerts": [],
@@ -128,7 +156,9 @@ If a product has low stock but NO sales in last 90 days:
 }
 ```
 
-#### ❌ Sample Response — No Supplier Linked
+---
+
+### No Supplier Found
 ```json
 {
   "alerts": [
@@ -148,13 +178,15 @@ If a product has low stock but NO sales in last 90 days:
 }
 ```
 
-#### 🧮 Days-Until-Stockout Calculation Example
+---
+
+### Days-Until-Stockout Calculation Example
 If:
-- current_stock = 30
-- total sales in last 90 days = 180
-- avg_daily_sales = 180 / 90 = 2
+- Stock = 30  
+- Sold 180 in last 90 days  
+- Avg daily sales = 180 / 90 = 2  
+
 Then:
-```ini
+```
 days_until_stockout = 30 / 2 = 15
 ```
-
