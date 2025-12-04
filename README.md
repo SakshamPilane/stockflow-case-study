@@ -15,15 +15,13 @@ The submission focuses on correct backend logic, DB design, and clear assumption
 | File / Folder | Description |
 |--------------|-------------|
 | [`case_study_solution.md`](./case_study_solution.md) | Full write-up for the Google form (all parts: reasoning + explanations) |
-| [`assumptions.md`](./assumptions.md) | Documented assumptions for Parts 1–3 |
 | [`part1_fixed_create_product.py`](./part1_fixed_create_product.py) | Corrected product creation API |
 | [`part3_low_stock_alerts.py`](./part3_low_stock_alerts.py) | Low-stock alerts API implementation |
 | [`app.py`](./app.py) | Lightweight placeholder for imports |
 | [`models.py`](./models.py) | Minimal models for schema reference |
 | [`db/schema.sql`](./db/schema.sql) | Full SQL schema with indexes & constraints |
 | [`db/notes.md`](./db/notes.md) | Schema decisions, gaps, and rationale |
-| [`db/erd.puml`](./db/erd.puml) | ERD (PlantUML source) |
-| `db/erd.png` | *(Add after generating PNG from puml file)* |
+| [`db/erd.png`](./db/erd.png) | ERD (Entity Relationship Diagram) |
 | [`samples/examples.md`](./samples/examples.md) | Mocked API requests & responses |
 
 ---
@@ -32,18 +30,8 @@ The submission focuses on correct backend logic, DB design, and clear assumption
 
 A complete ERD for the StockFlow inventory system is available here:
 
-📌 **PlantUML Source:**  
-👉 [`db/erd.puml`](./db/erd.puml)
-
-📌 **Rendered Diagram (PNG):**  
-👉 *(Add `erd.png` here once generated)*
-
-To generate the ERD:
-
-1. Open https://www.plantuml.com/plantuml/uml  
-2. Paste the contents of `db/erd.puml`  
-3. Export as `.png`  
-4. Place the image at: `db/erd.png`
+📌 **PlantUML Source Rendered Diagram (PNG):**  
+👉 [`db/erd.png`](./db/erd.png)
 
 ---
 
@@ -117,11 +105,6 @@ Handles:
 
 Mock request/response examples:  
 👉 [`samples/examples.md`](./samples/examples.md)
-
----
-
-### ✔ Assumptions (for incomplete requirements)  
-👉 [`assumptions.md`](./assumptions.md)
 
 ---
 
