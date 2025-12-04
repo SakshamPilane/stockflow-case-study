@@ -1,5 +1,5 @@
 # 📦 StockFlow Case Study – Backend Engineering (Bynry Inc.)
-## Candidate: Saksham Pilane
+## Candidate: Saksham Maruti Pilane
 This repository contains my solution for the StockFlow (B2B Inventory Management) case study.
 It includes a corrected product creation endpoint, a database schema, and an implementation plan + code for the low-stock alerts API.
 The submission focuses on correct backend logic, DB design, and clear assumptions rather than a full runnable app.
